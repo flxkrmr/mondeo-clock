@@ -47,7 +47,6 @@ void setupRtc() {
 
 void setupU8g2() {
   u8g2.begin();
-  u8g2.setFont(u8g2_font_inr30_mf);
 }
 
 void displayTime(char delim) { 
@@ -56,6 +55,7 @@ void displayTime(char delim) {
 
   sprintf(buf, "%02d%c%02d", now.hour(), delim, now.minute());
           
+  u8g2.setFont(u8g2_font_inr30_mf);
   u8g2.clearBuffer();
   u8g2.drawStr(0,32,buf);
 
