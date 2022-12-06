@@ -2,6 +2,10 @@
 #include <U8g2lib.h>
 #include <Wire.h>
 #include "RTClib.h"
+#include <EasyButton.h>
+
+#include "ui/UiTime.h"
+#include "ui/UiStartup.h"
 
 extern "C"
 {
@@ -11,54 +15,75 @@ extern "C"
 
 #define REFRESH_DELAY_MS 10
 
+#define BUTTON_H D3
+#define BUTTON_M D4
+
+EasyButton button_h(BUTTON_H);
+EasyButton button_m(BUTTON_M);
+
 RTC_DS1307 rtc;
 
 U8G2_SSD1306_128X32_UNIVISION_F_HW_I2C u8g2(U8G2_R0, /* reset=*/ U8X8_PIN_NONE, /* clock=*/ SCL, /* data=*/ SDA);   // pin remapping with ESP8266 HW I2C
 
+UiTime uiTime(&u8g2, &rtc);
+UiStartup uiStartup(&u8g2);
+
 unsigned short inc = 0;
 
-enum Mode {
-  DISPLAY_TIME,
-  MONDEO_LOGO,
-  FORD_LOGO
-};
 
-Mode mode;
+enum Mode {
+  TIME,
+  STARTUP
+} mode;
 
 void setupSerial();
 void setupRtc();
 void setupU8g2();
 
 // return 0 when done;
-void displayTime(unsigned short i);
 int displayMondeo(unsigned short i);
 int displayFord(unsigned short i);
 void displayNoise(unsigned short i);
+void updateUiNow();
+
+void onButtonH();
+void onButtonHLong();
+void onButtonM();
+void onButtonMLong();
 
 void setup() {
   setupSerial();
   setupRtc();
   setupU8g2();
 
-  mode = FORD_LOGO;
+  uiStartup.init();
+
+  button_h.begin();
+  button_h.onPressed(onButtonH);
+  //button_h.onPressedFor(2000, onButtonHLong);
+
+  button_m.begin();
+  button_m.onPressed(onButtonM);
+  button_m.onPressedFor(1500, onButtonMLong);
+
+  mode = STARTUP;
 }
 
 void loop() {
   switch (mode) {
-    case FORD_LOGO:
-      if(!displayFord(inc))
-        mode = MONDEO_LOGO;
+    case STARTUP:
+      uiStartup.show();
+      if(uiStartup.animationDone)
+        mode = TIME;
       break;
-    case MONDEO_LOGO:
-      if(!displayMondeo(inc))
-        mode = DISPLAY_TIME;
-      break;
-    case DISPLAY_TIME:
-      displayTime(inc);
+    case TIME:
+      uiTime.show();
       break;
   }
 
-  delay(REFRESH_DELAY_MS);
+  button_h.read();
+  button_m.read();
+  
   inc++;
 }
 
@@ -85,29 +110,6 @@ void setupU8g2() {
   u8g2.begin();
 }
 
-#define TIME_REFRESH_CYCLES 50
-bool delim_present = true;
-void displayTime(unsigned short i) {
-  if (i % TIME_REFRESH_CYCLES) {
-    return;
-  }
-
-  char buf[10];
-  char delim = delim_present ? ':' : ' ';
-  delim_present = !delim_present;
-
-  DateTime now = rtc.now();
-
-  sprintf(buf, "%02d%c%02d", now.hour(), delim, now.minute());
-
-  u8g2.setFont(u8g2_font_inr30_mf);
-  u8g2.clearBuffer();
-  u8g2.drawStr(0,32,buf);
-
-  Serial.println(buf);
-  u8g2.sendBuffer();
-}
-
 #define NOISE_REFRESH_CYCLES 25
 void displayNoise(unsigned short i) {
   if (i % NOISE_REFRESH_CYCLES) {
@@ -127,63 +129,47 @@ void displayNoise(unsigned short i) {
   u8g2.sendBuffer();
 }
 
-int displayMondeoCyclesStart = 0;
-bool displayMondeoMovementDone = false; 
-bool displayMondeoStarted = false;
-#define DISPLAY_MONDEO_CYCLES 40
-int displayMondeo(unsigned short i) {
-  if (!displayMondeoStarted) {
-    displayMondeoCyclesStart = i;
-    displayMondeoStarted = true;
-  }
-  int y;
-  if (displayMondeoMovementDone) {
-    y = 0;
-  } else {
-    int x = (i - displayMondeoCyclesStart);
-    if (x > 32) {
-      displayMondeoMovementDone = true;
-    }
-
-    y = x-32;
-  }
-
-  u8g2.clearBuffer();
-  u8g2.drawXBM(0, y, BITMAP_MONDEO_WIDTH, BITMAP_MONDEO_HEIGHT, bitmapMondeo);
-  u8g2.sendBuffer();
-  if (i - displayMondeoCyclesStart > DISPLAY_MONDEO_CYCLES) {
-    return 0;
-  } else {
-    return 1;
+void updateUiNow() {
+  switch(mode) {
+    case STARTUP:
+      break;
+    case TIME:
+      uiTime.showNow();
+      break;
   }
 }
 
-int displayFordCyclesStart = 0;
-bool displayFordMovementDone = false; 
-bool displayFordStarted = false;
-#define DISPLAY_FORD_CYCLES 40
-int displayFord(unsigned short i) {
-  if (!displayFordCyclesStart) {
-    displayFordCyclesStart = i;
-    displayFordStarted = true;
+void onButtonH() {
+  switch(mode) {
+    case STARTUP:
+      break;
+    case TIME:
+      rtc.adjust(rtc.now() + TimeSpan(3600));
+      uiTime.showNow();
+      break;
   }
-  u8g2.clearBuffer();
-  int y;
-  if (displayFordMovementDone) {
-    y = 0;
-  } else {
-    int x = (i - displayFordCyclesStart);
-    if (x > 32) {
-      displayFordMovementDone = true;
-    }
+}
 
-    y = x-32;
+void onButtonHLong() {
+
+}
+
+void onButtonM() {
+  switch(mode) {
+    case STARTUP:
+      break;
+    case TIME:
+      rtc.adjust(rtc.now() + TimeSpan(60));
+      uiTime.showNow();
   }
-  u8g2.drawXBM(20, y, BITMAP_FORD_WIDTH, BITMAP_FORD_HEIGHT, bitmapFord);
-  u8g2.sendBuffer();
-  if (i - displayFordCyclesStart > DISPLAY_FORD_CYCLES) {
-    return 0;
-  } else {
-    return 1;
+}
+
+void onButtonMLong() {
+  switch(mode) {
+    case STARTUP:
+      break;
+    case TIME:
+      uiTime.changeFont();
+      uiTime.showNow();
   }
 }
