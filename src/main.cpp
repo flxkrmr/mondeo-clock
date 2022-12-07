@@ -6,6 +6,7 @@
 
 #include "ui/UiTime.h"
 #include "ui/UiStartup.h"
+#include "ui/UiStopwatch.h"
 
 extern "C"
 {
@@ -27,24 +28,24 @@ U8G2_SSD1306_128X32_UNIVISION_F_HW_I2C u8g2(U8G2_R0, /* reset=*/ U8X8_PIN_NONE, 
 
 UiTime uiTime(&u8g2, &rtc);
 UiStartup uiStartup(&u8g2);
+UiStopwatch uiStopwatch(&u8g2);
 
 unsigned short inc = 0;
 
 
 enum Mode {
+  STARTUP,
   TIME,
-  STARTUP
+  STOPWATCH
 } mode;
 
 void setupSerial();
 void setupRtc();
 void setupU8g2();
 
-// return 0 when done;
 int displayMondeo(unsigned short i);
 int displayFord(unsigned short i);
 void displayNoise(unsigned short i);
-void updateUiNow();
 
 void onButtonH();
 void onButtonHLong();
@@ -60,7 +61,7 @@ void setup() {
 
   button_h.begin();
   button_h.onPressed(onButtonH);
-  //button_h.onPressedFor(2000, onButtonHLong);
+  button_h.onPressedFor(1500, onButtonHLong);
 
   button_m.begin();
   button_m.onPressed(onButtonM);
@@ -79,6 +80,9 @@ void loop() {
     case TIME:
       uiTime.show();
       break;
+    case STOPWATCH:
+      uiStopwatch.show();
+      break;    
   }
 
   button_h.read();
@@ -129,16 +133,6 @@ void displayNoise(unsigned short i) {
   u8g2.sendBuffer();
 }
 
-void updateUiNow() {
-  switch(mode) {
-    case STARTUP:
-      break;
-    case TIME:
-      uiTime.showNow();
-      break;
-  }
-}
-
 void onButtonH() {
   switch(mode) {
     case STARTUP:
@@ -147,11 +141,23 @@ void onButtonH() {
       rtc.adjust(rtc.now() + TimeSpan(3600));
       uiTime.showNow();
       break;
+    case STOPWATCH:
+      uiStopwatch.onButtonResetSplit();
+      break;
   }
 }
 
 void onButtonHLong() {
-
+  switch(mode) {
+    case STARTUP:
+      break;
+    case TIME:
+      mode = STOPWATCH;
+      break;
+    case STOPWATCH:
+      mode = TIME;
+      break;
+  }
 }
 
 void onButtonM() {
@@ -161,6 +167,10 @@ void onButtonM() {
     case TIME:
       rtc.adjust(rtc.now() + TimeSpan(60));
       uiTime.showNow();
+      break;
+    case STOPWATCH:
+      uiStopwatch.onButtonStartStop();
+      break;
   }
 }
 
@@ -171,5 +181,8 @@ void onButtonMLong() {
     case TIME:
       uiTime.changeFont();
       uiTime.showNow();
+      break;
+    case STOPWATCH:
+      break;
   }
 }
