@@ -30,9 +30,6 @@ UiTime uiTime(&u8g2, &rtc);
 UiStartup uiStartup(&u8g2);
 UiStopwatch uiStopwatch(&u8g2);
 
-unsigned short inc = 0;
-
-
 enum Mode {
   STARTUP,
   TIME,
@@ -87,8 +84,6 @@ void loop() {
 
   button_h.read();
   button_m.read();
-  
-  inc++;
 }
 
 
@@ -112,25 +107,6 @@ void setupRtc() {
 
 void setupU8g2() {
   u8g2.begin();
-}
-
-#define NOISE_REFRESH_CYCLES 25
-void displayNoise(unsigned short i) {
-  if (i % NOISE_REFRESH_CYCLES) {
-    return;
-  }
-
-  u8g2.clearBuffer();
-
-  for(int x = 0; x < 128; x++) {
-    for(int y = 0; y < 32; y++) {
-      if(!random(4)) {
-        u8g2.drawPixel(x, y);
-      }
-    }
-  }
-  
-  u8g2.sendBuffer();
 }
 
 void onButtonH() {
