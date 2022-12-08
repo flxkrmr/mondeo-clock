@@ -9,9 +9,9 @@ void UiStopwatch::show() {
     u8g2->clearBuffer();
     unsigned long t = time();
     unsigned short tHun = t % 100;
-    unsigned short tSec = (t /   1000) % 60;
-    unsigned short tMin = (t /  60000) % 60;
-    unsigned short tHou = (t / 360000) % 24;
+    unsigned short tSec = (t /    1000) % 60;
+    unsigned short tMin = (t /   60000) % 60;
+    unsigned short tHou = (t / 3600000) % 24;
 
     char buf[10];
     sprintf(buf, "%02d:%02d:%02d", tHou, tMin, tSec);
