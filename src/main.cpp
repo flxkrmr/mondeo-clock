@@ -3,10 +3,13 @@
 #include <Wire.h>
 #include "RTClib.h"
 #include <EasyButton.h>
+#include <OneWire.h>
+#include <DallasTemperature.h>
 
 #include "ui/UiTime.h"
 #include "ui/UiStartup.h"
 #include "ui/UiStopwatch.h"
+#include "ui/UiTemperature.h"
 
 extern "C"
 {
@@ -18,22 +21,26 @@ extern "C"
 
 #define BUTTON_H D3
 #define BUTTON_M D4
+#define ONE_WIRE D7
 
 EasyButton button_h(BUTTON_H);
 EasyButton button_m(BUTTON_M);
 
 RTC_DS1307 rtc;
-
 U8G2_SSD1306_128X32_UNIVISION_F_HW_I2C u8g2(U8G2_R0, /* reset=*/ U8X8_PIN_NONE, /* clock=*/ SCL, /* data=*/ SDA);   // pin remapping with ESP8266 HW I2C
+OneWire oneWire(ONE_WIRE);
+DallasTemperature sensors(&oneWire);
 
 UiTime uiTime(&u8g2, &rtc);
 UiStartup uiStartup(&u8g2);
 UiStopwatch uiStopwatch(&u8g2);
+UiTemperature uiTemperature(&u8g2, &sensors);
 
 enum Mode {
   STARTUP,
   TIME,
-  STOPWATCH
+  STOPWATCH,
+  TEMPERATURE
 } mode;
 
 void setupSerial();
@@ -53,16 +60,17 @@ void setup() {
   setupSerial();
   setupRtc();
   setupU8g2();
+  sensors.begin();
 
   uiStartup.init();
 
   button_h.begin();
   button_h.onPressed(onButtonH);
-  button_h.onPressedFor(1500, onButtonHLong);
+  button_h.onPressedFor(500, onButtonHLong);
 
   button_m.begin();
   button_m.onPressed(onButtonM);
-  button_m.onPressedFor(1500, onButtonMLong);
+  button_m.onPressedFor(500, onButtonMLong);
 
   mode = STARTUP;
 }
@@ -79,7 +87,10 @@ void loop() {
       break;
     case STOPWATCH:
       uiStopwatch.show();
-      break;    
+      break;
+    case TEMPERATURE:
+      uiTemperature.show();
+      break;   
   }
 
   button_h.read();
@@ -120,6 +131,8 @@ void onButtonH() {
     case STOPWATCH:
       uiStopwatch.onButtonResetSplit();
       break;
+    case TEMPERATURE:
+      break;
   }
 }
 
@@ -131,6 +144,9 @@ void onButtonHLong() {
       mode = STOPWATCH;
       break;
     case STOPWATCH:
+      mode = TEMPERATURE;
+      break;
+    case TEMPERATURE:
       mode = TIME;
       break;
   }
@@ -147,6 +163,8 @@ void onButtonM() {
     case STOPWATCH:
       uiStopwatch.onButtonStartStop();
       break;
+    case TEMPERATURE:
+      break;
   }
 }
 
@@ -159,6 +177,8 @@ void onButtonMLong() {
       uiTime.showNow();
       break;
     case STOPWATCH:
+      break;
+    case TEMPERATURE:
       break;
   }
 }
