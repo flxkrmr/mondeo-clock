@@ -1,13 +1,5 @@
 #include "UiStartup.h"
 
-UiStartup::UiStartup(U8G2_SSD1306_128X32_UNIVISION_F_HW_I2C *u8g2) {
-    this->u8g2 = u8g2;
-}
-
-void UiStartup::init() {
-    animationDone = false;
-}
-
 void UiStartup::show() {
     showFordLogo();
     delay(1500);

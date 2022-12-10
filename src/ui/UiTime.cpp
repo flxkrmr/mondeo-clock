@@ -1,7 +1,6 @@
 #include "UiTime.h"
 
-UiTime::UiTime(U8G2_SSD1306_128X32_UNIVISION_F_HW_I2C *u8g2, RTC_DS1307 *rtc) {
-    this->u8g2 = u8g2;
+UiTime::UiTime(U8G2_SSD1306_128X32_UNIVISION_F_HW_I2C *u8g2, RTC_DS1307 *rtc) : UiBase(u8g2) {
     this->rtc = rtc;
 }
 

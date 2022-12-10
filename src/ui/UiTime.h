@@ -3,19 +3,19 @@
 #include <Arduino.h>
 #include <RTClib.h>
 #include <U8g2lib.h>
+#include "UiBase.h"
 
-class UiTime {
+class UiTime : UiBase{
 
     public:
         UiTime(U8G2_SSD1306_128X32_UNIVISION_F_HW_I2C *u8g2, RTC_DS1307 *rtc);
 
-        void show();
+        void show() override;
 
         void showNow();
         void changeFont();
 
     private:
-        U8G2_SSD1306_128X32_UNIVISION_F_HW_I2C *u8g2;
         RTC_DS1307 *rtc;
 
         const unsigned short refreshCycleMs = 250;

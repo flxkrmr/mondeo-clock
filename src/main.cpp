@@ -60,8 +60,6 @@ void setup() {
   setupU8g2();
   sensors.begin();
 
-  uiStartup.init();
-
   button_h.begin();
   button_h.onPressed(onButtonH);
   button_h.onPressedFor(500, onButtonHLong);
@@ -70,7 +68,7 @@ void setup() {
   button_m.onPressed(onButtonM);
   button_m.onPressedFor(500, onButtonMLong);
 
-  mode = CAR;
+  mode = STARTUP;
 }
 
 void loop() {
@@ -137,6 +135,10 @@ void onButtonH() {
       break;
     case TEMPERATURE:
       break;
+    case BUBBLE:
+      break;
+    case CAR:
+      break;
   }
 }
 
@@ -151,6 +153,12 @@ void onButtonHLong() {
       mode = TEMPERATURE;
       break;
     case TEMPERATURE:
+      mode = BUBBLE;
+      break;
+    case BUBBLE:
+      mode = CAR;
+      break;
+    case CAR:
       mode = TIME;
       break;
   }
@@ -169,6 +177,10 @@ void onButtonM() {
       break;
     case TEMPERATURE:
       break;
+    case BUBBLE:
+      break;
+    case CAR:
+      break;
   }
 }
 
@@ -183,6 +195,10 @@ void onButtonMLong() {
     case STOPWATCH:
       break;
     case TEMPERATURE:
+      break;
+    case BUBBLE:
+      break;
+    case CAR:
       break;
   }
 }

@@ -1,9 +1,5 @@
 #include "UiAnimationBubble.h"
 
-UiAnimationBubble::UiAnimationBubble(U8G2_SSD1306_128X32_UNIVISION_F_HW_I2C *u8g2) {
-    this->u8g2 = u8g2;
-}
-
 void UiAnimationBubble::show() {
     u8g2->clearBuffer();
     u8g2->drawXBM(30, 0, bubble_2_width, bubble_2_height, bubble_2_bits);
