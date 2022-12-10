@@ -10,20 +10,14 @@
 #include "ui/UiStartup.h"
 #include "ui/UiStopwatch.h"
 #include "ui/UiTemperature.h"
-
-extern "C"
-{
-  #include "bitmapMondeo.h"
-  #include "bitmapFord.h"
-}
-
-#define REFRESH_DELAY_MS 10
+#include "ui/UiAnimationBubble.h"
+#include "ui/UiAnimationCar.h"
 
 #define BUTTON_H D3
 #define BUTTON_M D4
 #define ONE_WIRE D7
 
-EasyButton button_h(BUTTON_H);
+EasyButton button_h(BUTTON_H, 45);
 EasyButton button_m(BUTTON_M);
 
 RTC_DS1307 rtc;
@@ -35,12 +29,16 @@ UiTime uiTime(&u8g2, &rtc);
 UiStartup uiStartup(&u8g2);
 UiStopwatch uiStopwatch(&u8g2);
 UiTemperature uiTemperature(&u8g2, &sensors);
+UiAnimationBubble uiAnimationBubble(&u8g2);
+UiAnimationCar uiAnimationCar(&u8g2);
 
 enum Mode {
   STARTUP,
   TIME,
   STOPWATCH,
-  TEMPERATURE
+  TEMPERATURE,
+  BUBBLE,
+  CAR
 } mode;
 
 void setupSerial();
@@ -72,7 +70,7 @@ void setup() {
   button_m.onPressed(onButtonM);
   button_m.onPressedFor(500, onButtonMLong);
 
-  mode = STARTUP;
+  mode = CAR;
 }
 
 void loop() {
@@ -90,7 +88,13 @@ void loop() {
       break;
     case TEMPERATURE:
       uiTemperature.show();
-      break;   
+      break;
+    case BUBBLE:
+      uiAnimationBubble.show();
+      break; 
+    case CAR:
+      uiAnimationCar.show();
+      break;
   }
 
   button_h.read();
